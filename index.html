@@ -21,13 +21,12 @@
     --red: #c0392b;
     --red-bg: #fdeaea;
     --orange: #e67e22;
-    --orange-bg: #fff8e1;
     --g100: #eef1f4;
     --g200: #d8dee5;
-    --g300: #b0bcc8;
     --shadow: 0 2px 12px rgba(0,0,0,0.06);
     --shadow-lg: 0 8px 32px rgba(0,0,0,0.10);
     --r: 12px;
+    --hon-accent: #8b5cf6;
   }
 
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -51,7 +50,6 @@
     background:var(--red-bg); border-left:4px solid var(--red);
     border-radius:var(--r); color:var(--red);
   }
-  #error-msg a { color:var(--red); }
 
   #report { display:none; }
 
@@ -90,6 +88,7 @@
   .kpi.pos { border-top-color:var(--green); }
   .kpi.neg { border-top-color:var(--red); }
   .kpi.neu { border-top-color:var(--teal); }
+  .kpi.hon { border-top-color:var(--hon-accent); }
   .kpi-label {
     font-size:.72rem; font-weight:600; text-transform:uppercase;
     letter-spacing:1px; color:var(--muted); margin-bottom:6px;
@@ -97,12 +96,14 @@
   .kpi-val { font-size:1.28rem; font-weight:700; }
   .kpi.pos .kpi-val { color:#1e7a5a; }
   .kpi.neg .kpi-val { color:var(--red); }
+  .kpi.hon .kpi-val { color:var(--hon-accent); }
   .kpi-sub { font-size:.76rem; color:var(--muted); margin-top:3px; }
 
   .section {
     background:var(--white); border-radius:var(--r); box-shadow:var(--shadow);
     padding:24px 28px; margin-bottom:18px;
   }
+  .section.hon-section { border-left:4px solid var(--hon-accent); }
   .stitle {
     font-size:.95rem; font-weight:700; color:var(--dark); margin-bottom:18px;
     display:flex; align-items:center; gap:8px;
@@ -110,6 +111,7 @@
   .stitle::before {
     content:''; width:4px; height:18px; background:var(--accent); border-radius:2px;
   }
+  .hon-section .stitle::before { background:var(--hon-accent); }
 
   .bar-row { margin-bottom:14px; }
   .bar-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px; font-size:.83rem; }
@@ -136,6 +138,7 @@
   .tr { text-align:right; }
   .tc { text-align:center; }
   .total-row { background:var(--accent-light) !important; font-weight:700; }
+  .discount-row { color:var(--green); font-style:italic; }
 
   .scroll-table { max-height:520px; overflow-y:auto; border-radius:var(--r); border:1px solid var(--g200); }
 
@@ -159,12 +162,7 @@
 <body>
 
 <div id="loading"><div class="spinner"></div><p>Cargando datos de Google Sheets…</p></div>
-
-<div id="error-msg">
-  <strong>Error al cargar datos</strong>
-  <p id="error-detail"></p>
-  <p style="margin-top:12px;font-size:.85rem">Verificá que el Google Sheet esté publicado como CSV.</p>
-</div>
+<div id="error-msg"><strong>Error al cargar datos</strong><p id="error-detail"></p></div>
 
 <div id="report">
   <div class="header">
@@ -186,9 +184,14 @@
         <div class="kpi-sub" id="k-ing-sub">—</div>
       </div>
       <div class="kpi neg">
-        <div class="kpi-label">Total Egresos</div>
+        <div class="kpi-label">Egresos Operativos</div>
         <div class="kpi-val mono" id="k-egr">—</div>
         <div class="kpi-sub" id="k-egr-sub">—</div>
+      </div>
+      <div class="kpi hon">
+        <div class="kpi-label">Honorarios</div>
+        <div class="kpi-val mono" id="k-hon">—</div>
+        <div class="kpi-sub" id="k-hon-sub">—</div>
       </div>
       <div class="kpi" id="k-flujo-card">
         <div class="kpi-label">Flujo Remanente</div>
@@ -196,9 +199,9 @@
         <div class="kpi-sub" id="k-flujo-sub">—</div>
       </div>
       <div class="kpi neu">
-        <div class="kpi-label">Ejecución</div>
+        <div class="kpi-label">Ejecución Total</div>
         <div class="kpi-val mono" id="k-ejec">—</div>
-        <div class="kpi-sub">Egresos / Ingresos</div>
+        <div class="kpi-sub">(Egresos + Honorarios) / Ingresos</div>
       </div>
     </div>
 
@@ -213,8 +216,22 @@
     </div>
 
     <div class="section">
-      <div class="stitle">Top 15 Subcategorías de Egresos</div>
+      <div class="stitle">Top 15 Subcategorías</div>
       <div id="sec-subcats"></div>
+    </div>
+
+    <!-- HONORARIOS SEPARADOS -->
+    <div class="section hon-section">
+      <div class="stitle">Honorarios Profesionales — Dirección de Obra</div>
+      <div class="tw">
+        <table id="t-hon">
+          <thead><tr>
+            <th>Fecha</th><th>Descripción</th><th>Subcategoría</th>
+            <th class="tr">Monto Gs.</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
 
     <div class="section">
@@ -233,7 +250,7 @@
         <table id="t-prov">
           <thead><tr>
             <th>#</th><th>Proveedor</th><th class="tr">Total Gs.</th>
-            <th class="tr">% Egresos</th><th>Participación</th>
+            <th class="tr">%</th><th>Part.</th>
           </tr></thead>
           <tbody></tbody>
         </table>
@@ -260,7 +277,7 @@
           <thead><tr>
             <th>Fecha</th><th>Categoría</th><th>Subcategoría</th>
             <th>Descripción</th><th>Proveedor</th>
-            <th class="tr">Egreso Gs.</th>
+            <th class="tr">Monto Gs.</th>
           </tr></thead>
           <tbody></tbody>
         </table>
@@ -275,8 +292,16 @@
 </div>
 
 <script>
+// ═══════════════════════════════════════════════════════════════
+//  CONFIG
+//  IMPORTANTE: La URL debe incluir &gid=XXXX si hay múltiples
+//  pestañas en el Sheet. Sin gid exporta la primera pestaña.
+// ═══════════════════════════════════════════════════════════════
 var CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR40nmqwo2hCZZrEqdYjyT6SaJwGR_tkNve9efTtEJfYd61r8poJYOlGA5T8J_GUGZC27LM5BSZLEPz/pub?output=csv';
 
+// ═══════════════════════════════════════════════════════════════
+//  CSV PARSER — Handles quoted fields, newlines inside quotes
+// ═══════════════════════════════════════════════════════════════
 function parseCSV(text) {
   var rows = [], row = [], cell = '', inQ = false;
   for (var i = 0; i < text.length; i++) {
@@ -300,6 +325,9 @@ function parseCSV(text) {
   return rows;
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  COLUMN DETECTION
+// ═══════════════════════════════════════════════════════════════
 function detectCols(headers) {
   var idx = {};
   function n(s) { return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim(); }
@@ -319,13 +347,55 @@ function detectCols(headers) {
   return idx;
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  ROBUST NUMBER PARSER — respects sign, handles all PY formats
+//  "7.000.000,00" → 7000000
+//  "-2.826.860,00" → -2826860
+//  "45.000.000" → 45000000
+//  "200.000,00" → 200000
+//  "" → 0
+// ═══════════════════════════════════════════════════════════════
 function parseNum(s) {
   if (!s) { return 0; }
-  var c = s.toString().replace(/[Gg][Ss]\.?\s*/g,'').replace(/\$/g,'').replace(/\u00a0/g,'').trim();
-  if (/\d\.\d{3}/.test(c)) { c = c.replace(/\./g,'').replace(',','.'); }
-  else { c = c.replace(/,/g,'.'); }
-  var v = parseFloat(c);
-  return isNaN(v) ? 0 : Math.abs(v);
+  var raw = s.toString().replace(/\u00a0/g, '').trim();
+  if (!raw) { return 0; }
+
+  // Detect sign
+  var sign = 1;
+  if (raw.charAt(0) === '-') { sign = -1; raw = raw.substring(1).trim(); }
+
+  // Remove currency symbols
+  raw = raw.replace(/[Gg][Ss]\.?\s*/g, '').replace(/\$/g, '').trim();
+  if (!raw) { return 0; }
+
+  // Determine format:
+  // If both dot and comma exist → dots are thousands, comma is decimal
+  // If only dots → could be thousands (1.000.000) or decimal (1.5)
+  // If only comma → decimal separator
+  var hasDot = raw.indexOf('.') !== -1;
+  var hasComma = raw.indexOf(',') !== -1;
+
+  if (hasDot && hasComma) {
+    // "7.000.000,00" → remove dots, comma→dot
+    raw = raw.replace(/\./g, '').replace(',', '.');
+  } else if (hasDot) {
+    // Check if it looks like thousands: "45.000.000" or "200.000"
+    // Pattern: digits followed by .ddd groups
+    if (/^\d{1,3}(\.\d{3})+$/.test(raw)) {
+      // Pure thousands format: "45.000.000" → remove dots
+      raw = raw.replace(/\./g, '');
+    } else if (/\d\.\d{3}/.test(raw)) {
+      // Has a .ddd pattern somewhere → thousands separators
+      raw = raw.replace(/\./g, '');
+    }
+    // else: single dot like "1.5" → keep as decimal
+  } else if (hasComma) {
+    // Comma as decimal: "1234,50" → "1234.50"
+    raw = raw.replace(',', '.');
+  }
+
+  var v = parseFloat(raw);
+  return isNaN(v) ? 0 : v * sign;
 }
 
 function parseDate(s) {
@@ -348,18 +418,17 @@ function fmtGs(n) {
   return neg + 'Gs. ' + Math.abs(Math.round(n)).toLocaleString('es-PY');
 }
 
-function pct(v,t) { return t > 0 ? (v/t*100) : 0; }
+function pct(v, t) { return t > 0 ? (v / t * 100) : 0; }
 
 function barHTML(label, value, total, maxBar) {
-  var p = pct(value, total);
-  var w = maxBar > 0 ? Math.min(value / maxBar * 100, 100) : 0;
-  var over = p > 100;
+  var p = pct(Math.abs(value), total);
+  var w = maxBar > 0 ? Math.min(Math.abs(value) / maxBar * 100, 100) : 0;
   return '<div class="bar-row">' +
     '<div class="bar-head">' +
     '<span class="bar-lbl">' + label + '</span>' +
-    '<span class="bar-val mono">' + p.toFixed(1) + '% \u00B7 ' + fmtGs(value) + '</span>' +
+    '<span class="bar-val mono">' + p.toFixed(1) + '% \u00B7 ' + fmtGs(Math.abs(value)) + '</span>' +
     '</div>' +
-    '<div class="bar-track"><div class="bar-fill' + (over ? ' over' : '') + '" style="width:' + w + '%"></div></div>' +
+    '<div class="bar-track"><div class="bar-fill' + (p > 100 ? ' over' : '') + '" style="width:' + w + '%"></div></div>' +
     '</div>';
 }
 
@@ -369,22 +438,32 @@ function aggregate(arr, keyFn, valFn) {
     var k = keyFn(d) || 'Sin clasificar';
     map[k] = (map[k] || 0) + valFn(d);
   });
-  return Object.entries(map).sort(function(a,b) { return b[1] - a[1]; });
+  return Object.entries(map).sort(function(a, b) { return Math.abs(b[1]) - Math.abs(a[1]); });
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  MAIN
+// ═══════════════════════════════════════════════════════════════
 async function main() {
   try {
     var resp = await fetch(CSV_URL);
-    if (!resp.ok) { throw new Error('No se pudo cargar el CSV (HTTP ' + resp.status + ')'); }
+    if (!resp.ok) { throw new Error('HTTP ' + resp.status); }
     var text = await resp.text();
     var rawRows = parseCSV(text);
-    if (rawRows.length < 2) { throw new Error('El CSV está vacío'); }
+    if (rawRows.length < 2) { throw new Error('CSV vacío'); }
 
     var headers = rawRows[0];
     var ci = detectCols(headers);
 
+    // Validate critical columns exist
+    if (ci.ingreso === undefined && ci.egreso === undefined) {
+      throw new Error('No se encontraron columnas Ingreso/Egreso. Headers: ' + headers.join(', '));
+    }
+
     var ingresosArr = [];
-    var egresosArr = [];
+    var egresosOp = [];   // Egresos operativos (sin honorarios)
+    var honorarios = [];  // Honorarios separados
+    var descuentos = [];  // Descuentos recibidos
     var maxFecha = null;
 
     for (var i = 1; i < rawRows.length; i++) {
@@ -403,69 +482,137 @@ async function main() {
 
       if (fecha && (!maxFecha || fecha > maxFecha)) { maxFecha = fecha; }
 
+      // INGRESOS
       if (ingreso > 0) {
         ingresosArr.push({ fecha:fecha, desc:desc, cat:cat, monto:ingreso });
       }
-      if (egreso > 0) {
-        egresosArr.push({ fecha:fecha, desc:desc, cat:cat, subcat:subcat, cuenta:cuenta, recurso:recurso, prov:prov, monto:egreso });
+
+      // EGRESOS — classify
+      if (egreso !== 0) {
+        var entry = {
+          fecha:fecha, desc:desc, cat:cat, subcat:subcat,
+          cuenta:cuenta, recurso:recurso, prov:prov, monto:egreso
+        };
+
+        var catLower = cat.toLowerCase();
+
+        if (catLower === 'descuento recibido') {
+          // Negative egreso = discount that reduces total
+          descuentos.push(entry);
+        } else if (catLower === 'honorarios') {
+          honorarios.push(entry);
+        } else {
+          egresosOp.push(entry);
+        }
       }
     }
 
-    ingresosArr.sort(function(a,b) { return (a.fecha||new Date(0)) - (b.fecha||new Date(0)); });
-    egresosArr.sort(function(a,b) { return (a.fecha||new Date(0)) - (b.fecha||new Date(0)); });
+    // Sort by date
+    function sortByDate(a, b) { return (a.fecha || new Date(0)) - (b.fecha || new Date(0)); }
+    ingresosArr.sort(sortByDate);
+    egresosOp.sort(sortByDate);
+    honorarios.sort(sortByDate);
 
-    var totalIng = ingresosArr.reduce(function(s,d) { return s + d.monto; }, 0);
-    var totalEgr = egresosArr.reduce(function(s,d) { return s + d.monto; }, 0);
-    var flujo = totalIng - totalEgr;
-    var ejec = totalIng > 0 ? (totalEgr / totalIng * 100) : 0;
+    // ── Calculations ──
+    var totalIng = ingresosArr.reduce(function(s, d) { return s + d.monto; }, 0);
 
-    var cats     = aggregate(egresosArr, function(d){return d.cat;},     function(d){return d.monto;});
-    var subcats  = aggregate(egresosArr, function(d){return d.subcat;},  function(d){return d.monto;}).slice(0, 15);
-    var cuentas  = aggregate(egresosArr, function(d){return d.cuenta;},  function(d){return d.monto;});
-    var recursos = aggregate(egresosArr, function(d){return d.recurso;}, function(d){return d.monto;});
-    var provs    = aggregate(egresosArr, function(d){return d.prov;},    function(d){return d.monto;}).slice(0, 15);
+    // Egresos operativos (positive values)
+    var totalEgrOp = egresosOp.reduce(function(s, d) { return s + d.monto; }, 0);
 
-    // RENDER
+    // Honorarios
+    var totalHon = honorarios.reduce(function(s, d) { return s + d.monto; }, 0);
+
+    // Descuentos (negative values reduce total)
+    var totalDesc = descuentos.reduce(function(s, d) { return s + d.monto; }, 0);
+
+    // Total egresos neto = operativos + honorarios + descuentos (descuentos son negativos)
+    var totalEgrNeto = totalEgrOp + totalHon + totalDesc;
+
+    var flujo = totalIng - totalEgrNeto;
+    var ejec = totalIng > 0 ? (totalEgrNeto / totalIng * 100) : 0;
+
+    // All egresos combined for category charts (excluding honorarios)
+    var allEgrForCats = egresosOp.concat(descuentos);
+    var totalEgrForCats = totalEgrOp + totalDesc; // Net operational
+
+    var cats     = aggregate(allEgrForCats, function(d){return d.cat;},     function(d){return d.monto;});
+    var subcats  = aggregate(allEgrForCats, function(d){return d.subcat;},  function(d){return d.monto;}).slice(0, 15);
+    var cuentas  = aggregate(allEgrForCats, function(d){return d.cuenta;},  function(d){return d.monto;});
+    var recursos = aggregate(allEgrForCats, function(d){return d.recurso;}, function(d){return d.monto;});
+    var provs    = aggregate(egresosOp.concat(honorarios).concat(descuentos), function(d){return d.prov;}, function(d){return d.monto;}).slice(0, 15);
+
+    // ══════════════════════════════════════════════════════
+    //  RENDER
+    // ══════════════════════════════════════════════════════
     document.getElementById('fecha-corte').textContent = fmtDate(maxFecha || new Date());
+
+    // KPIs
     document.getElementById('k-ing').textContent = fmtGs(totalIng);
     document.getElementById('k-ing-sub').textContent = ingresosArr.length + ' transferencias';
-    document.getElementById('k-egr').textContent = fmtGs(totalEgr);
-    document.getElementById('k-egr-sub').textContent = egresosArr.length + ' operaciones';
+    document.getElementById('k-egr').textContent = fmtGs(totalEgrOp + totalDesc);
+    document.getElementById('k-egr-sub').textContent = egresosOp.length + ' ops' + (totalDesc !== 0 ? ' (neto desc.)' : '');
+    document.getElementById('k-hon').textContent = fmtGs(totalHon);
+    document.getElementById('k-hon-sub').textContent = honorarios.length + ' pagos';
     document.getElementById('k-flujo').textContent = fmtGs(flujo);
     document.getElementById('k-flujo-sub').textContent = flujo >= 0 ? 'Saldo positivo \u2713' : '\u26A0 Déficit';
     document.getElementById('k-flujo-card').classList.add(flujo >= 0 ? 'pos' : 'neg');
     document.getElementById('k-ejec').textContent = ejec.toFixed(1) + '%';
 
+    // Ejecución bars
     document.getElementById('sec-ejec').innerHTML =
-      barHTML('Egresos vs Ingresos Recibidos', totalEgr, totalIng, totalIng);
+      barHTML('Egresos Operativos vs Ingresos', totalEgrOp + totalDesc, totalIng, totalIng) +
+      barHTML('Honorarios vs Ingresos', totalHon, totalIng, totalIng) +
+      barHTML('Total Ejecutado vs Ingresos', totalEgrNeto, totalIng, totalIng);
 
-    var maxCat = cats.length ? cats[0][1] : 1;
+    // Categorías (sin honorarios — esos van aparte)
+    var maxCat = cats.length ? Math.abs(cats[0][1]) : 1;
     document.getElementById('sec-cats').innerHTML =
-      cats.map(function(x) { return barHTML(x[0], x[1], totalEgr, maxCat); }).join('');
+      cats.map(function(x) { return barHTML(x[0], x[1], Math.abs(totalEgrForCats), maxCat); }).join('');
 
-    var maxSub = subcats.length ? subcats[0][1] : 1;
+    // Subcategorías
+    var maxSub = subcats.length ? Math.abs(subcats[0][1]) : 1;
     document.getElementById('sec-subcats').innerHTML =
-      subcats.map(function(x) { return barHTML(x[0], x[1], totalEgr, maxSub); }).join('');
+      subcats.map(function(x) { return barHTML(x[0], x[1], Math.abs(totalEgrForCats), maxSub); }).join('');
 
-    var maxCta = cuentas.length ? cuentas[0][1] : 1;
+    // Cuentas
+    var maxCta = cuentas.length ? Math.abs(cuentas[0][1]) : 1;
     document.getElementById('sec-cuentas').innerHTML =
-      cuentas.map(function(x) { return barHTML(x[0], x[1], totalEgr, maxCta); }).join('');
+      cuentas.map(function(x) { return barHTML(x[0], x[1], Math.abs(totalEgrForCats), maxCta); }).join('');
 
-    var maxRec = recursos.length ? recursos[0][1] : 1;
+    // Recursos
+    var maxRec = recursos.length ? Math.abs(recursos[0][1]) : 1;
     document.getElementById('sec-recursos').innerHTML =
-      recursos.map(function(x) { return barHTML(x[0], x[1], totalEgr, maxRec); }).join('');
+      recursos.map(function(x) { return barHTML(x[0], x[1], Math.abs(totalEgrForCats), maxRec); }).join('');
+
+    // Tabla Honorarios
+    var tbHon = document.querySelector('#t-hon tbody');
+    var honTotal = 0;
+    honorarios.forEach(function(d) {
+      honTotal += d.monto;
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + fmtDate(d.fecha) + '</td>' +
+        '<td>' + (d.desc || '\u2014') + '</td>' +
+        '<td>' + (d.subcat || '\u2014') + '</td>' +
+        '<td class="tr mono">' + fmtGs(d.monto) + '</td>';
+      tbHon.appendChild(tr);
+    });
+    var trHonTot = document.createElement('tr');
+    trHonTot.className = 'total-row';
+    trHonTot.innerHTML = '<td colspan="3" class="tr">TOTAL HONORARIOS</td><td class="tr mono">' + fmtGs(honTotal) + '</td>';
+    tbHon.appendChild(trHonTot);
 
     // Tabla proveedores
     var tbProv = document.querySelector('#t-prov tbody');
     provs.forEach(function(x, i) {
-      var p = pct(x[1], totalEgr);
+      var p = pct(Math.abs(x[1]), totalEgrNeto);
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td class="tc">' + (i+1) + '</td>' +
         '<td>' + x[0] + '</td>' +
-        '<td class="tr mono">' + fmtGs(x[1]) + '</td>' +
+        '<td class="tr mono">' + fmtGs(Math.abs(x[1])) + '</td>' +
         '<td class="tr mono">' + p.toFixed(1) + '%</td>' +
-        '<td><div class="bar-track" style="height:6px;width:120px"><div class="bar-fill" style="width:' + p + '%"></div></div></td>';
+        '<td><div class="bar-track" style="height:6px;width:120px"><div class="bar-fill" style="width:' + Math.min(p, 100) + '%"></div></div></td>';
       tbProv.appendChild(tr);
     });
 
@@ -489,11 +636,15 @@ async function main() {
     trTot.innerHTML = '<td colspan="4" class="tr">TOTAL INGRESOS</td><td class="tr mono">' + fmtGs(totalIng) + '</td><td></td>';
     tbIng.appendChild(trTot);
 
-    // Tabla egresos
+    // Tabla egresos (últimos 50 — incluye todo)
     var tbEgr = document.querySelector('#t-egr tbody');
-    var last50 = egresosArr.slice(-50).reverse();
+    var allEgr = egresosOp.concat(honorarios).concat(descuentos);
+    allEgr.sort(sortByDate);
+    var last50 = allEgr.slice(-50).reverse();
     last50.forEach(function(d) {
+      var isDiscount = d.monto < 0;
       var tr = document.createElement('tr');
+      if (isDiscount) { tr.className = 'discount-row'; }
       tr.innerHTML =
         '<td>' + fmtDate(d.fecha) + '</td>' +
         '<td>' + (d.cat || '\u2014') + '</td>' +
@@ -504,6 +655,7 @@ async function main() {
       tbEgr.appendChild(tr);
     });
 
+    // Show report
     document.getElementById('loading').style.display = 'none';
     document.getElementById('report').style.display = 'block';
 
