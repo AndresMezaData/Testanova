@@ -301,7 +301,7 @@
 // ═══════════════════════════════════════════════════════════════
 //  CONFIG — Cambiar URL cuando esté publicado el Sheet
 // ═══════════════════════════════════════════════════════════════
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/1Fkdncy5n2NutKQylr7xg6-D7Wra013yBI5YzNfNDHX8/edit?gid=1729674458#gid=1729674458';
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR40nmqwo2hCZZrEqdYjyT6SaJwGR_tkNve9efTtEJfYd61r8poJYOlGA5T8J_GUGZC27LM5BSZLEPz/pub?output=csv';
 
 // ═══════════════════════════════════════════════════════════════
 //  CSV PARSER
@@ -413,11 +413,6 @@ function aggregate(arr, keyFn, valFn) {
 //  MAIN
 // ═══════════════════════════════════════════════════════════════
 async function main() {
-  try {
-    if (CSV_URL.includes('https://docs.google.com/spreadsheets/d/1Fkdncy5n2NutKQylr7xg6-D7Wra013yBI5YzNfNDHX8/edit?gid=1729674458#gid=1729674458
-                         ')) {
-      throw new Error('Falta configurar la URL del CSV público de Testanova.\nEditá la variable CSV_URL al inicio del script.');
-    }
 
     const resp = await fetch(CSV_URL);
     if (!resp.ok) throw new Error('No se pudo cargar el CSV (HTTP ' + resp.status + ')');
