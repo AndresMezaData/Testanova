@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Testanova — Reporte Financiero</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --dark: #1b2a3d;
+    --mid: #2a4a6b;
+    --accent: #3b9ece;
+    --accent-light: #e9f4fb;
+    --teal: #028090;
+    --green: #02C39A;
+    --bg: #f6f8fa;
+    --text: #1a2535;
+    --muted: #5e7285;
+    --white: #ffffff;
+    --red: #c0392b;
+    --red-bg: #fdeaea;
+    --orange: #e67e22;
+    --orange-bg: #fff8e1;
+    --g100: #eef1f4;
+    --g200: #d8dee5;
+    --g300: #b0bcc8;
+    --shadow: 0 2px 12px rgba(0,0,0,0.06);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.10);
+    --r: 12px;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); line-height:1.6; }
+  .mono { font-family:'Space Mono',monospace; }
+
+  /* LOADING / ERROR */
+  #loading {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    min-height:100vh; gap:20px;
+  }
+  .spinner {
+    width:48px; height:48px; border:4px solid var(--g200);
+    border-top-color:var(--accent); border-radius:50%;
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform:rotate(360deg) } }
+  #loading p { color:var(--muted); font-size:.95rem; }
+
+  #error-msg {
+    display:none; max-width:600px; margin:80px auto; padding:24px;
+    background:var(--red-bg); border-left:4px solid var(--red);
+    border-radius:var(--r); color:var(--red);
+  }
+  #error-msg a { color:var(--red); }
+
+  #report { display:none; }
+
+  /* HEADER */
+  .header {
+    background:linear-gradient(135deg, var(--dark) 0%, var(--mid) 100%);
+    color:var(--white); padding:40px 0 32px; position:relative; overflow:hidden;
+  }
+  .header::after {
+    content:''; position:absolute; top:-40%; right:-15%;
+    width:450px; height:450px;
+    background:radial-gradient(circle, rgba(59,158,206,.15) 0%, transparent 70%);
+    border-radius:50%;
+  }
+  .header-inner { max-width:1100px; margin:0 auto; padding:0 24px; position:relative; z-index:1; }
+  .badge {
+    display:inline-block; background:rgba(59,158,206,.25); color:var(--accent);
+    font-size:.72rem; font-weight:600; letter-spacing:1.5px; text-transform:uppercase;
+    padding:4px 12px; border-radius:20px; margin-bottom:12px;
+  }
+  .header h1 { font-size:2rem; font-weight:700; letter-spacing:-.5px; margin-bottom:6px; }
+  .header-meta { display:flex; gap:24px; font-size:.88rem; opacity:.85; flex-wrap:wrap; }
+  .header-meta span { display:flex; align-items:center; gap:6px; }
+
+  /* LAYOUT */
+  .container { max-width:1100px; margin:0 auto; padding:0 24px; }
+
+  /* KPI CARDS */
+  .kpi-grid {
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
+    gap:14px; margin:-28px 0 28px; position:relative; z-index:2;
+  }
+  .kpi {
+    background:var(--white); border-radius:var(--r); padding:18px 20px;
+    box-shadow:var(--shadow); border-top:3px solid var(--accent);
+    transition:transform .2s, box-shadow .2s;
+  }
+  .kpi:hover { transform:translateY(-2px); box-shadow:var(--shadow-lg); }
+  .kpi.pos { border-top-color:var(--green); }
+  .kpi.neg { border-top-color:var(--red); }
+  .kpi.neu { border-top-color:var(--teal); }
+  .kpi-label {
+    font-size:.72rem; font-weight:600; text-transform:uppercase;
+    letter-spacing:1px; color:var(--muted); margin-bottom:6px;
+  }
+  .kpi-val { font-size:1.28rem; font-weight:700; }
+  .kpi.pos .kpi-val { color:#1e7a5a; }
+  .kpi.neg .kpi-val { color:var(--red); }
+  .kpi-sub { font-size:.76rem; color:var(--muted); margin-top:3px; }
+
+  /* SECTIONS */
+  .section {
+    background:var(--white); border-radius:var(--r); box-shadow:var(--shadow);
+    padding:24px 28px; margin-bottom:18px;
+  }
+  .stitle {
+    font-size:.95rem; font-weight:700; color:var(--dark); margin-bottom:18px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .stitle::before {
+    content:''; width:4px; height:18px; background:var(--accent); border-radius:2px;
+  }
+
+  /* BARS */
+  .bar-row { margin-bottom:14px; }
+  .bar-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px; font-size:.83rem; }
+  .bar-lbl { font-weight:500; }
+  .bar-val { font-weight:600; color:var(--muted); }
+  .bar-track { width:100%; height:10px; background:var(--g100); border-radius:6px; overflow:hidden; }
+  .bar-fill {
+    height:100%; border-radius:6px; transition:width .8s ease;
+    background:linear-gradient(90deg, var(--mid), var(--accent));
+  }
+  .bar-fill.over { background:linear-gradient(90deg, var(--orange), var(--red)); }
+  .bar-fill.green { background:linear-gradient(90deg, var(--teal), var(--green)); }
+
+  /* TABLES */
+  .tw { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:.83rem; }
+  thead th {
+    background:var(--dark); color:var(--white); padding:9px 12px; text-align:left;
+    font-weight:600; font-size:.76rem; text-transform:uppercase; letter-spacing:.5px;
+    position:sticky; top:0; z-index:1;
+  }
+  thead th:first-child { border-radius:8px 0 0 0; }
+  thead th:last-child { border-radius:0 8px 0 0; }
+  tbody td { padding:9px 12px; border-bottom:1px solid var(--g100); }
+  tbody tr:hover { background:var(--accent-light); }
+  .tr { text-align:right; }
+  .tc { text-align:center; }
+  .tag { display:inline-block; font-size:.68rem; font-weight:600; padding:2px 8px; border-radius:10px; }
+  .tag-ing { background:#e8f5e9; color:#2e7d32; }
+  .tag-egr { background:#fce4ec; color:#c62828; }
+  .total-row { background:var(--accent-light) !important; font-weight:700; }
+
+  .scroll-table { max-height:520px; overflow-y:auto; border-radius:var(--r); border:1px solid var(--g200); }
+
+  /* FOOTER */
+  .footer {
+    text-align:center; padding:32px 24px; color:var(--muted); font-size:.78rem;
+    border-top:1px solid var(--g200); margin-top:36px;
+  }
+  .footer strong { color:var(--teal); }
+  .footer a { color:var(--teal); text-decoration:none; }
+
+  @media (max-width:640px) {
+    .header h1 { font-size:1.4rem; }
+    .kpi-grid { grid-template-columns:1fr 1fr; }
+    .kpi-val { font-size:1.05rem; }
+    .section { padding:16px; }
+    table { font-size:.76rem; }
+    thead th, tbody td { padding:7px 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loading"><div class="spinner"></div><p>Cargando datos de Google Sheets…</p></div>
+
+<div id="error-msg">
+  <strong>Error al cargar datos</strong>
+  <p id="error-detail"></p>
+  <p style="margin-top:12px;font-size:.85rem">Verificá que el Google Sheet esté publicado como CSV.</p>
+</div>
+
+<div id="report">
+  <div class="header">
+    <div class="header-inner">
+      <div class="badge">Reporte Financiero</div>
+      <h1>Obra Testanova</h1>
+      <div class="header-meta">
+        <span>📅 Corte: <strong id="fecha-corte">—</strong></span>
+        <span>📊 Datos en tiempo real · Google Sheets</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- KPIs -->
+    <div class="kpi-grid">
+      <div class="kpi pos">
+        <div class="kpi-label">Total Ingresos</div>
+        <div class="kpi-val mono" id="k-ing">—</div>
+        <div class="kpi-sub" id="k-ing-sub">—</div>
+      </div>
+      <div class="kpi neg">
+        <div class="kpi-label">Total Egresos</div>
+        <div class="kpi-val mono" id="k-egr">—</div>
+        <div class="kpi-sub" id="k-egr-sub">—</div>
+      </div>
+      <div class="kpi" id="k-flujo-card">
+        <div class="kpi-label">Flujo Remanente</div>
+        <div class="kpi-val mono" id="k-flujo">—</div>
+        <div class="kpi-sub" id="k-flujo-sub">—</div>
+      </div>
+      <div class="kpi neu">
+        <div class="kpi-label">Ejecución</div>
+        <div class="kpi-val mono" id="k-ejec">—</div>
+        <div class="kpi-sub">Egresos / Ingresos</div>
+      </div>
+    </div>
+
+    <!-- Ejecución -->
+    <div class="section">
+      <div class="stitle">Ejecución Presupuestaria</div>
+      <div id="sec-ejec"></div>
+    </div>
+
+    <!-- Categorías de Egresos -->
+    <div class="section">
+      <div class="stitle">Egresos por Categoría</div>
+      <div id="sec-cats"></div>
+    </div>
+
+    <!-- Subcategorías -->
+    <div class="section">
+      <div class="stitle">Top 15 Subcategorías de Egresos</div>
+      <div id="sec-subcats"></div>
+    </div>
+
+    <!-- Cuenta Destino -->
+    <div class="section">
+      <div class="stitle">Distribución por Cuenta Destino</div>
+      <div id="sec-cuentas"></div>
+    </div>
+
+    <!-- Recurso -->
+    <div class="section">
+      <div class="stitle">Distribución por Recurso</div>
+      <div id="sec-recursos"></div>
+    </div>
+
+    <!-- Proveedores -->
+    <div class="section">
+      <div class="stitle">Top 15 Proveedores</div>
+      <div class="tw">
+        <table id="t-prov">
+          <thead><tr>
+            <th>#</th><th>Proveedor</th><th class="tr">Total Gs.</th>
+            <th class="tr">% Egresos</th><th>Participación</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Ingresos -->
+    <div class="section">
+      <div class="stitle">Historial de Ingresos</div>
+      <div class="tw">
+        <table id="t-ing">
+          <thead><tr>
+            <th>#</th><th>Fecha</th><th>Descripción</th>
+            <th>Categoría</th><th class="tr">Monto Gs.</th><th class="tr">Acumulado</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Últimos Egresos -->
+    <div class="section">
+      <div class="stitle">Últimas 50 Operaciones de Egreso</div>
+      <div class="tw scroll-table">
+        <table id="t-egr">
+          <thead><tr>
+            <th>Fecha</th><th>Categoría</th><th>Subcategoría</th>
+            <th>Descripción</th><th>Proveedor</th>
+            <th class="tr">Egreso Gs.</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <strong>Asudata</strong> Consulting · Convertimos datos en decisiones que crecen.<br>
+    <a href="https://asudata.com" target="_blank">asudata.com</a> · Generado automáticamente desde Google Sheets
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  CONFIG — Cambiar URL cuando esté publicado el Sheet
+// ═══════════════════════════════════════════════════════════════
+const CSV_URL = 'PEGAR_URL_CSV_PUBLICO_TESTANOVA_AQUI';
+
+// ═══════════════════════════════════════════════════════════════
+//  CSV PARSER
+// ═══════════════════════════════════════════════════════════════
+function parseCSV(text) {
+  const rows = []; let row = []; let cell = ''; let inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '"') {
+      if (inQ && text[i+1] === '"') { cell += '"'; i++; }
+      else inQ = !inQ;
+    } else if (c === ',' && !inQ) {
+      row.push(cell.trim()); cell = '';
+    } else if ((c === '\n' || c === '\r') && !inQ) {
+      if (c === '\r' && text[i+1] === '\n') i++;
+      row.push(cell.trim()); cell = '';
+      if (row.length > 1 || row.some(x => x)) rows.push(row);
+      row = [];
+    } else { cell += c; }
+  }
+  row.push(cell.trim());
+  if (row.length > 1 || row.some(x => x)) rows.push(row);
+  return rows;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  COLUMN DETECTION — Testanova headers
+// ═══════════════════════════════════════════════════════════════
+function detectCols(headers) {
+  const idx = {};
+  const n = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  headers.forEach((h, i) => {
+    const k = n(h);
+    if (k.startsWith('descripci')) idx.desc = i;
+    if (k === 'date' || k === 'fecha') idx.fecha = i;
+    if (k === 'ingreso') idx.ingreso = i;
+    if (k === 'egreso') idx.egreso = i;
+    if (k === 'categorias' || k === 'categoria') idx.cat = i;
+    if (k === 'subcategorias' || k.startsWith('subcateg')) idx.subcat = i;
+    if (k === 'cuenta destino') idx.cuenta = i;
+    if (k === 'recurso') idx.recurso = i;
+    if (k === 'proveedor') idx.proveedor = i;
+    if (k === 'producto/servicio' || k.startsWith('producto')) idx.producto = i;
+    if (k === 'encargado') idx.encargado = i;
+    if (k === 'ingreso  usd' || k === 'ingreso usd') idx.ingUsd = i;
+    if (k === 'egreso usd') idx.egrUsd = i;
+  });
+  return idx;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════════════
+function parseNum(s) {
+  if (!s) return 0;
+  let c = s.toString().replace(/[Gg][Ss]\.?\s*/g,'').replace(/\$/g,'').replace(/\u00a0/g,'').trim();
+  if (/\d\.\d{3}/.test(c)) { c = c.replace(/\./g,'').replace(',','.'); }
+  else { c = c.replace(',','.'); }
+  const v = parseFloat(c);
+  return isNaN(v) ? 0 : Math.abs(v);
+}
+
+function parseDate(s) {
+  if (!s) return null;
+  let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (m) return new Date(+m[3], +m[2]-1, +m[1]);
+  m = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+  if (m) return new Date(+m[1], +m[2]-1, +m[3]);
+  return null;
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return d.toLocaleDateString('es-PY',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+
+function fmtGs(n) {
+  if (n == null || isNaN(n)) return '—';
+  const neg = n < 0 ? '-' : '';
+  return neg + 'Gs. ' + Math.abs(Math.round(n)).toLocaleString('es-PY');
+}
+
+function pct(v,t) { return t > 0 ? (v/t*100) : 0; }
+
+function barHTML(label, value, total, maxBar, cls) {
+  const p = pct(value, total);
+  const w = maxBar > 0 ? Math.min(value / maxBar * 100, 100) : 0;
+  const over = p > 100;
+  const fillCls = cls || (over ? ' over' : '');
+  return '<div class="bar-row">' +
+    '<div class="bar-head">' +
+      '<span class="bar-lbl">' + label + '</span>' +
+      '<span class="bar-val mono">' + p.toFixed(1) + '% · ' + fmtGs(value) + '</span>' +
+    '</div>' +
+    '<div class="bar-track"><div class="bar-fill' + fillCls + '" style="width:' + w + '%"></div></div>' +
+  '</div>';
+}
+
+function aggregate(arr, keyFn, valFn) {
+  const map = {};
+  arr.forEach(d => {
+    const k = keyFn(d) || 'Sin clasificar';
+    map[k] = (map[k] || 0) + valFn(d);
+  });
+  return Object.entries(map).sort((a,b) => b[1] - a[1]);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MAIN
+// ═══════════════════════════════════════════════════════════════
+async function main() {
+  try {
+    if (CSV_URL.includes('PEGAR_URL')) {
+      throw new Error('Falta configurar la URL del CSV público de Testanova.\nEditá la variable CSV_URL al inicio del script.');
+    }
+
+    const resp = await fetch(CSV_URL);
+    if (!resp.ok) throw new Error('No se pudo cargar el CSV (HTTP ' + resp.status + ')');
+    const text = await resp.text();
+    const rawRows = parseCSV(text);
+    if (rawRows.length < 2) throw new Error('El CSV está vacío');
+
+    const headers = rawRows[0];
+    const ci = detectCols(headers);
+
+    // ── Parse rows ──
+    const ingresosArr = [];
+    const egresosArr = [];
+    let maxFecha = null;
+
+    for (let i = 1; i < rawRows.length; i++) {
+      const r = rawRows[i];
+      if (!r || r.length < 5) continue;
+
+      const desc     = (r[ci.desc]      || '').trim();
+      const fecha    = parseDate(r[ci.fecha] || '');
+      const cat      = (r[ci.cat]       || '').trim();
+      const subcat   = (r[ci.subcat]    || '').trim();
+      const cuenta   = (r[ci.cuenta]    || '').trim();
+      const recurso  = (r[ci.recurso]   || '').trim();
+      const prov     = (r[ci.proveedor] || '').trim();
+      const producto = (r[ci.producto]  || '').trim();
+      const ingreso  = parseNum(r[ci.ingreso] || '');
+      const egreso   = parseNum(r[ci.egreso]  || '');
+
+      if (fecha && (!maxFecha || fecha > maxFecha)) maxFecha = fecha;
+
+      if (ingreso > 0) {
+        ingresosArr.push({ fecha, desc, cat, monto: ingreso });
+      }
+      if (egreso > 0) {
+        egresosArr.push({ fecha, desc, cat, subcat, cuenta, recurso, prov, producto, monto: egreso });
+      }
+    }
+
+    // Sort by date
+    ingresosArr.sort((a,b) => (a.fecha||new Date(0)) - (b.fecha||new Date(0)));
+    egresosArr.sort((a,b) => (a.fecha||new Date(0)) - (b.fecha||new Date(0)));
+
+    // ── Calculations ──
+    const totalIng = ingresosArr.reduce((s,d) => s + d.monto, 0);
+    const totalEgr = egresosArr.reduce((s,d) => s + d.monto, 0);
+    const flujo = totalIng - totalEgr;
+    const ejec = totalIng > 0 ? (totalEgr / totalIng * 100) : 0;
+
+    const cats     = aggregate(egresosArr, d => d.cat,     d => d.monto);
+    const subcats  = aggregate(egresosArr, d => d.subcat,  d => d.monto).slice(0, 15);
+    const cuentas  = aggregate(egresosArr, d => d.cuenta,  d => d.monto);
+    const recursos = aggregate(egresosArr, d => d.recurso, d => d.monto);
+    const provs    = aggregate(egresosArr, d => d.prov,    d => d.monto).slice(0, 15);
+
+    // ══════════════════════════════════════════════════════
+    //  RENDER
+    // ══════════════════════════════════════════════════════
+    document.getElementById('fecha-corte').textContent = fmtDate(maxFecha || new Date());
+
+    // KPIs
+    document.getElementById('k-ing').textContent = fmtGs(totalIng);
+    document.getElementById('k-ing-sub').textContent = ingresosArr.length + ' transferencias';
+    document.getElementById('k-egr').textContent = fmtGs(totalEgr);
+    document.getElementById('k-egr-sub').textContent = egresosArr.length + ' operaciones';
+    document.getElementById('k-flujo').textContent = fmtGs(flujo);
+    document.getElementById('k-flujo-sub').textContent = flujo >= 0 ? 'Saldo positivo ✓' : '⚠ Déficit';
+    document.getElementById('k-flujo-card').classList.add(flujo >= 0 ? 'pos' : 'neg');
+    document.getElementById('k-ejec').textContent = ejec.toFixed(1) + '%';
+
+    // Ejecución
+    document.getElementById('sec-ejec').innerHTML =
+      barHTML('Egresos vs Ingresos Recibidos', totalEgr, totalIng, totalIng);
+
+    // Categorías
+    const maxCat = cats.length ? cats[0][1] : 1;
+    document.getElementById('sec-cats').innerHTML =
+      cats.map(([k,v]) => barHTML(k, v, totalEgr, maxCat)).join('');
+
+    // Subcategorías
+    const maxSub = subcats.length ? subcats[0][1] : 1;
+    document.getElementById('sec-subcats').innerHTML =
+      subcats.map(([k,v]) => barHTML(k, v, totalEgr, maxSub)).join('');
+
+    // Cuentas
+    const maxCta = cuentas.length ? cuentas[0][1] : 1;
+    document.getElementById('sec-cuentas').innerHTML =
+      cuentas.map(([k,v]) => barHTML(k, v, totalEgr, maxCta)).join('');
+
+    // Recursos
+    const maxRec = recursos.length ? recursos[0][1] : 1;
+    document.getElementById('sec-recursos').innerHTML =
+      recursos.map(([k,v]) => barHTML(k, v, totalEgr, maxRec)).join('');
+
+    // Tabla proveedores
+    const tbProv = document.querySelector('#t-prov tbody');
+    provs.forEach(([k,v], i) => {
+      const p = pct(v, totalEgr);
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td class="tc">' + (i+1) + '</td>' +
+        '<td>' + k + '</td>' +
+        '<td class="tr mono">' + fmtGs(v) + '</td>' +
+        '<td class="tr mono">' + p.toFixed(1) + '%</td>' +
+        '<td><div class="bar-track" style="height:6px;width:120px"><div class="bar-fill" style="width:' + p + '%"></div></div></td>';
+      tbProv.appendChild(tr);
+    });
+
+    // Tabla ingresos
+    const tbIng = document.querySelector('#t-ing tbody');
+    let acum = 0;
+    ingresosArr.forEach((d, i) => {
+      acum += d.monto;
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td class="tc">' + (i+1) + '</td>' +
+        '<td>' + fmtDate(d.fecha) + '</td>' +
+        '<td>' + (d.desc || '—') + '</td>' +
+        '<td>' + (d.cat || '—') + '</td>' +
+        '<td class="tr mono">' + fmtGs(d.monto) + '</td>' +
+        '<td class="tr mono">' + fmtGs(acum) + '</td>';
+      tbIng.appendChild(tr);
+    });
+    const trTot = document.createElement('tr');
+    trTot.className = 'total-row';
+    trTot.innerHTML = '<td colspan="4" class="tr">TOTAL INGRESOS</td><td class="tr mono">' + fmtGs(totalIng) + '</td><td></td>';
+    tbIng.appendChild(trTot);
+
+    // Tabla egresos (últimos 50)
+    const tbEgr = document.querySelector('#t-egr tbody');
+    egresosArr.slice(-50).reverse().forEach(d => {
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + fmtDate(d.fecha) + '</td>' +
+        '<td>' + (d.cat || '—') + '</td>' +
+        '<td>' + (d.subcat || '—') + '</td>' +
+        '<td>' + (d.desc || '—') + '</td>' +
+        '<td>' + (d.prov || '—') + '</td>' +
+        '<td class="tr mono">' + fmtGs(d.monto) + '</td>';
+      tbEgr.appendChild(tr);
+    });
+
+    // Show
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('report').style.display = 'block';
+
+  } catch(err) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error-detail').textContent = err.message;
+    document.getElementById('error-msg').style.display = 'block';
+    console.error('Testanova Report Error:', err);
+  }
+}
+
+main();
+</script>
+</body>
+</html>
