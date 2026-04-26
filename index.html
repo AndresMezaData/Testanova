@@ -34,7 +34,6 @@
   body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); line-height:1.6; }
   .mono { font-family:'Space Mono',monospace; }
 
-  /* LOADING / ERROR */
   #loading {
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     min-height:100vh; gap:20px;
@@ -56,7 +55,6 @@
 
   #report { display:none; }
 
-  /* HEADER */
   .header {
     background:linear-gradient(135deg, var(--dark) 0%, var(--mid) 100%);
     color:var(--white); padding:40px 0 32px; position:relative; overflow:hidden;
@@ -77,10 +75,8 @@
   .header-meta { display:flex; gap:24px; font-size:.88rem; opacity:.85; flex-wrap:wrap; }
   .header-meta span { display:flex; align-items:center; gap:6px; }
 
-  /* LAYOUT */
   .container { max-width:1100px; margin:0 auto; padding:0 24px; }
 
-  /* KPI CARDS */
   .kpi-grid {
     display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
     gap:14px; margin:-28px 0 28px; position:relative; z-index:2;
@@ -103,7 +99,6 @@
   .kpi.neg .kpi-val { color:var(--red); }
   .kpi-sub { font-size:.76rem; color:var(--muted); margin-top:3px; }
 
-  /* SECTIONS */
   .section {
     background:var(--white); border-radius:var(--r); box-shadow:var(--shadow);
     padding:24px 28px; margin-bottom:18px;
@@ -116,7 +111,6 @@
     content:''; width:4px; height:18px; background:var(--accent); border-radius:2px;
   }
 
-  /* BARS */
   .bar-row { margin-bottom:14px; }
   .bar-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px; font-size:.83rem; }
   .bar-lbl { font-weight:500; }
@@ -127,9 +121,7 @@
     background:linear-gradient(90deg, var(--mid), var(--accent));
   }
   .bar-fill.over { background:linear-gradient(90deg, var(--orange), var(--red)); }
-  .bar-fill.green { background:linear-gradient(90deg, var(--teal), var(--green)); }
 
-  /* TABLES */
   .tw { overflow-x:auto; }
   table { width:100%; border-collapse:collapse; font-size:.83rem; }
   thead th {
@@ -143,14 +135,10 @@
   tbody tr:hover { background:var(--accent-light); }
   .tr { text-align:right; }
   .tc { text-align:center; }
-  .tag { display:inline-block; font-size:.68rem; font-weight:600; padding:2px 8px; border-radius:10px; }
-  .tag-ing { background:#e8f5e9; color:#2e7d32; }
-  .tag-egr { background:#fce4ec; color:#c62828; }
   .total-row { background:var(--accent-light) !important; font-weight:700; }
 
   .scroll-table { max-height:520px; overflow-y:auto; border-radius:var(--r); border:1px solid var(--g200); }
 
-  /* FOOTER */
   .footer {
     text-align:center; padding:32px 24px; color:var(--muted); font-size:.78rem;
     border-top:1px solid var(--g200); margin-top:36px;
@@ -191,8 +179,6 @@
   </div>
 
   <div class="container">
-
-    <!-- KPIs -->
     <div class="kpi-grid">
       <div class="kpi pos">
         <div class="kpi-label">Total Ingresos</div>
@@ -216,37 +202,31 @@
       </div>
     </div>
 
-    <!-- Ejecución -->
     <div class="section">
       <div class="stitle">Ejecución Presupuestaria</div>
       <div id="sec-ejec"></div>
     </div>
 
-    <!-- Categorías de Egresos -->
     <div class="section">
       <div class="stitle">Egresos por Categoría</div>
       <div id="sec-cats"></div>
     </div>
 
-    <!-- Subcategorías -->
     <div class="section">
       <div class="stitle">Top 15 Subcategorías de Egresos</div>
       <div id="sec-subcats"></div>
     </div>
 
-    <!-- Cuenta Destino -->
     <div class="section">
       <div class="stitle">Distribución por Cuenta Destino</div>
       <div id="sec-cuentas"></div>
     </div>
 
-    <!-- Recurso -->
     <div class="section">
       <div class="stitle">Distribución por Recurso</div>
       <div id="sec-recursos"></div>
     </div>
 
-    <!-- Proveedores -->
     <div class="section">
       <div class="stitle">Top 15 Proveedores</div>
       <div class="tw">
@@ -260,7 +240,6 @@
       </div>
     </div>
 
-    <!-- Ingresos -->
     <div class="section">
       <div class="stitle">Historial de Ingresos</div>
       <div class="tw">
@@ -274,7 +253,6 @@
       </div>
     </div>
 
-    <!-- Últimos Egresos -->
     <div class="section">
       <div class="stitle">Últimas 50 Operaciones de Egreso</div>
       <div class="tw scroll-table">
@@ -288,7 +266,6 @@
         </table>
       </div>
     </div>
-
   </div>
 
   <div class="footer">
@@ -298,271 +275,244 @@
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════════════
-//  CONFIG — Cambiar URL cuando esté publicado el Sheet
-// ═══════════════════════════════════════════════════════════════
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR40nmqwo2hCZZrEqdYjyT6SaJwGR_tkNve9efTtEJfYd61r8poJYOlGA5T8J_GUGZC27LM5BSZLEPz/pub?output=csv';
+var CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR40nmqwo2hCZZrEqdYjyT6SaJwGR_tkNve9efTtEJfYd61r8poJYOlGA5T8J_GUGZC27LM5BSZLEPz/pub?output=csv';
 
-// ═══════════════════════════════════════════════════════════════
-//  CSV PARSER
-// ═══════════════════════════════════════════════════════════════
 function parseCSV(text) {
-  const rows = []; let row = []; let cell = ''; let inQ = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
+  var rows = [], row = [], cell = '', inQ = false;
+  for (var i = 0; i < text.length; i++) {
+    var c = text[i];
     if (c === '"') {
       if (inQ && text[i+1] === '"') { cell += '"'; i++; }
-      else inQ = !inQ;
+      else { inQ = !inQ; }
     } else if (c === ',' && !inQ) {
       row.push(cell.trim()); cell = '';
     } else if ((c === '\n' || c === '\r') && !inQ) {
-      if (c === '\r' && text[i+1] === '\n') i++;
+      if (c === '\r' && text[i+1] === '\n') { i++; }
       row.push(cell.trim()); cell = '';
-      if (row.length > 1 || row.some(x => x)) rows.push(row);
+      if (row.length > 1 || row.some(function(x){ return x; })) { rows.push(row); }
       row = [];
-    } else { cell += c; }
+    } else {
+      cell += c;
+    }
   }
   row.push(cell.trim());
-  if (row.length > 1 || row.some(x => x)) rows.push(row);
+  if (row.length > 1 || row.some(function(x){ return x; })) { rows.push(row); }
   return rows;
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  COLUMN DETECTION — Testanova headers
-// ═══════════════════════════════════════════════════════════════
 function detectCols(headers) {
-  const idx = {};
-  const n = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
-  headers.forEach((h, i) => {
-    const k = n(h);
-    if (k.startsWith('descripci')) idx.desc = i;
-    if (k === 'date' || k === 'fecha') idx.fecha = i;
-    if (k === 'ingreso') idx.ingreso = i;
-    if (k === 'egreso') idx.egreso = i;
-    if (k === 'categorias' || k === 'categoria') idx.cat = i;
-    if (k === 'subcategorias' || k.startsWith('subcateg')) idx.subcat = i;
-    if (k === 'cuenta destino') idx.cuenta = i;
-    if (k === 'recurso') idx.recurso = i;
-    if (k === 'proveedor') idx.proveedor = i;
-    if (k === 'producto/servicio' || k.startsWith('producto')) idx.producto = i;
-    if (k === 'encargado') idx.encargado = i;
-    if (k === 'ingreso  usd' || k === 'ingreso usd') idx.ingUsd = i;
-    if (k === 'egreso usd') idx.egrUsd = i;
+  var idx = {};
+  function n(s) { return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim(); }
+  headers.forEach(function(h, i) {
+    var k = n(h);
+    if (k.startsWith('descripci')) { idx.desc = i; }
+    if (k === 'date' || k === 'fecha') { idx.fecha = i; }
+    if (k === 'ingreso') { idx.ingreso = i; }
+    if (k === 'egreso') { idx.egreso = i; }
+    if (k === 'categorias' || k === 'categoria') { idx.cat = i; }
+    if (k === 'subcategorias' || k.startsWith('subcateg')) { idx.subcat = i; }
+    if (k === 'cuenta destino') { idx.cuenta = i; }
+    if (k === 'recurso') { idx.recurso = i; }
+    if (k === 'proveedor') { idx.proveedor = i; }
+    if (k.startsWith('producto')) { idx.producto = i; }
   });
   return idx;
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  UTILS
-// ═══════════════════════════════════════════════════════════════
 function parseNum(s) {
-  if (!s) return 0;
-  let c = s.toString().replace(/[Gg][Ss]\.?\s*/g,'').replace(/\$/g,'').replace(/\u00a0/g,'').trim();
+  if (!s) { return 0; }
+  var c = s.toString().replace(/[Gg][Ss]\.?\s*/g,'').replace(/\$/g,'').replace(/\u00a0/g,'').trim();
   if (/\d\.\d{3}/.test(c)) { c = c.replace(/\./g,'').replace(',','.'); }
-  else { c = c.replace(',','.'); }
-  const v = parseFloat(c);
+  else { c = c.replace(/,/g,'.'); }
+  var v = parseFloat(c);
   return isNaN(v) ? 0 : Math.abs(v);
 }
 
 function parseDate(s) {
-  if (!s) return null;
-  let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-  if (m) return new Date(+m[3], +m[2]-1, +m[1]);
+  if (!s) { return null; }
+  var m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (m) { return new Date(+m[3], +m[2]-1, +m[1]); }
   m = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
-  if (m) return new Date(+m[1], +m[2]-1, +m[3]);
+  if (m) { return new Date(+m[1], +m[2]-1, +m[3]); }
   return null;
 }
 
 function fmtDate(d) {
-  if (!d) return '—';
+  if (!d) { return '\u2014'; }
   return d.toLocaleDateString('es-PY',{day:'2-digit',month:'2-digit',year:'numeric'});
 }
 
 function fmtGs(n) {
-  if (n == null || isNaN(n)) return '—';
-  const neg = n < 0 ? '-' : '';
+  if (n == null || isNaN(n)) { return '\u2014'; }
+  var neg = n < 0 ? '-' : '';
   return neg + 'Gs. ' + Math.abs(Math.round(n)).toLocaleString('es-PY');
 }
 
 function pct(v,t) { return t > 0 ? (v/t*100) : 0; }
 
-function barHTML(label, value, total, maxBar, cls) {
-  const p = pct(value, total);
-  const w = maxBar > 0 ? Math.min(value / maxBar * 100, 100) : 0;
-  const over = p > 100;
-  const fillCls = cls || (over ? ' over' : '');
+function barHTML(label, value, total, maxBar) {
+  var p = pct(value, total);
+  var w = maxBar > 0 ? Math.min(value / maxBar * 100, 100) : 0;
+  var over = p > 100;
   return '<div class="bar-row">' +
     '<div class="bar-head">' +
-      '<span class="bar-lbl">' + label + '</span>' +
-      '<span class="bar-val mono">' + p.toFixed(1) + '% · ' + fmtGs(value) + '</span>' +
+    '<span class="bar-lbl">' + label + '</span>' +
+    '<span class="bar-val mono">' + p.toFixed(1) + '% \u00B7 ' + fmtGs(value) + '</span>' +
     '</div>' +
-    '<div class="bar-track"><div class="bar-fill' + fillCls + '" style="width:' + w + '%"></div></div>' +
-  '</div>';
+    '<div class="bar-track"><div class="bar-fill' + (over ? ' over' : '') + '" style="width:' + w + '%"></div></div>' +
+    '</div>';
 }
 
 function aggregate(arr, keyFn, valFn) {
-  const map = {};
-  arr.forEach(d => {
-    const k = keyFn(d) || 'Sin clasificar';
+  var map = {};
+  arr.forEach(function(d) {
+    var k = keyFn(d) || 'Sin clasificar';
     map[k] = (map[k] || 0) + valFn(d);
   });
-  return Object.entries(map).sort((a,b) => b[1] - a[1]);
+  return Object.entries(map).sort(function(a,b) { return b[1] - a[1]; });
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  MAIN
-// ═══════════════════════════════════════════════════════════════
 async function main() {
+  try {
+    var resp = await fetch(CSV_URL);
+    if (!resp.ok) { throw new Error('No se pudo cargar el CSV (HTTP ' + resp.status + ')'); }
+    var text = await resp.text();
+    var rawRows = parseCSV(text);
+    if (rawRows.length < 2) { throw new Error('El CSV está vacío'); }
 
-    const resp = await fetch(CSV_URL);
-    if (!resp.ok) throw new Error('No se pudo cargar el CSV (HTTP ' + resp.status + ')');
-    const text = await resp.text();
-    const rawRows = parseCSV(text);
-    if (rawRows.length < 2) throw new Error('El CSV está vacío');
+    var headers = rawRows[0];
+    var ci = detectCols(headers);
 
-    const headers = rawRows[0];
-    const ci = detectCols(headers);
+    var ingresosArr = [];
+    var egresosArr = [];
+    var maxFecha = null;
 
-    // ── Parse rows ──
-    const ingresosArr = [];
-    const egresosArr = [];
-    let maxFecha = null;
+    for (var i = 1; i < rawRows.length; i++) {
+      var r = rawRows[i];
+      if (!r || r.length < 5) { continue; }
 
-    for (let i = 1; i < rawRows.length; i++) {
-      const r = rawRows[i];
-      if (!r || r.length < 5) continue;
+      var desc    = (r[ci.desc]      || '').trim();
+      var fecha   = parseDate(r[ci.fecha] || '');
+      var cat     = (r[ci.cat]       || '').trim();
+      var subcat  = (r[ci.subcat]    || '').trim();
+      var cuenta  = (r[ci.cuenta]    || '').trim();
+      var recurso = (r[ci.recurso]   || '').trim();
+      var prov    = (r[ci.proveedor] || '').trim();
+      var ingreso = parseNum(r[ci.ingreso] || '');
+      var egreso  = parseNum(r[ci.egreso]  || '');
 
-      const desc     = (r[ci.desc]      || '').trim();
-      const fecha    = parseDate(r[ci.fecha] || '');
-      const cat      = (r[ci.cat]       || '').trim();
-      const subcat   = (r[ci.subcat]    || '').trim();
-      const cuenta   = (r[ci.cuenta]    || '').trim();
-      const recurso  = (r[ci.recurso]   || '').trim();
-      const prov     = (r[ci.proveedor] || '').trim();
-      const producto = (r[ci.producto]  || '').trim();
-      const ingreso  = parseNum(r[ci.ingreso] || '');
-      const egreso   = parseNum(r[ci.egreso]  || '');
-
-      if (fecha && (!maxFecha || fecha > maxFecha)) maxFecha = fecha;
+      if (fecha && (!maxFecha || fecha > maxFecha)) { maxFecha = fecha; }
 
       if (ingreso > 0) {
-        ingresosArr.push({ fecha, desc, cat, monto: ingreso });
+        ingresosArr.push({ fecha:fecha, desc:desc, cat:cat, monto:ingreso });
       }
       if (egreso > 0) {
-        egresosArr.push({ fecha, desc, cat, subcat, cuenta, recurso, prov, producto, monto: egreso });
+        egresosArr.push({ fecha:fecha, desc:desc, cat:cat, subcat:subcat, cuenta:cuenta, recurso:recurso, prov:prov, monto:egreso });
       }
     }
 
-    // Sort by date
-    ingresosArr.sort((a,b) => (a.fecha||new Date(0)) - (b.fecha||new Date(0)));
-    egresosArr.sort((a,b) => (a.fecha||new Date(0)) - (b.fecha||new Date(0)));
+    ingresosArr.sort(function(a,b) { return (a.fecha||new Date(0)) - (b.fecha||new Date(0)); });
+    egresosArr.sort(function(a,b) { return (a.fecha||new Date(0)) - (b.fecha||new Date(0)); });
 
-    // ── Calculations ──
-    const totalIng = ingresosArr.reduce((s,d) => s + d.monto, 0);
-    const totalEgr = egresosArr.reduce((s,d) => s + d.monto, 0);
-    const flujo = totalIng - totalEgr;
-    const ejec = totalIng > 0 ? (totalEgr / totalIng * 100) : 0;
+    var totalIng = ingresosArr.reduce(function(s,d) { return s + d.monto; }, 0);
+    var totalEgr = egresosArr.reduce(function(s,d) { return s + d.monto; }, 0);
+    var flujo = totalIng - totalEgr;
+    var ejec = totalIng > 0 ? (totalEgr / totalIng * 100) : 0;
 
-    const cats     = aggregate(egresosArr, d => d.cat,     d => d.monto);
-    const subcats  = aggregate(egresosArr, d => d.subcat,  d => d.monto).slice(0, 15);
-    const cuentas  = aggregate(egresosArr, d => d.cuenta,  d => d.monto);
-    const recursos = aggregate(egresosArr, d => d.recurso, d => d.monto);
-    const provs    = aggregate(egresosArr, d => d.prov,    d => d.monto).slice(0, 15);
+    var cats     = aggregate(egresosArr, function(d){return d.cat;},     function(d){return d.monto;});
+    var subcats  = aggregate(egresosArr, function(d){return d.subcat;},  function(d){return d.monto;}).slice(0, 15);
+    var cuentas  = aggregate(egresosArr, function(d){return d.cuenta;},  function(d){return d.monto;});
+    var recursos = aggregate(egresosArr, function(d){return d.recurso;}, function(d){return d.monto;});
+    var provs    = aggregate(egresosArr, function(d){return d.prov;},    function(d){return d.monto;}).slice(0, 15);
 
-    // ══════════════════════════════════════════════════════
-    //  RENDER
-    // ══════════════════════════════════════════════════════
+    // RENDER
     document.getElementById('fecha-corte').textContent = fmtDate(maxFecha || new Date());
-
-    // KPIs
     document.getElementById('k-ing').textContent = fmtGs(totalIng);
     document.getElementById('k-ing-sub').textContent = ingresosArr.length + ' transferencias';
     document.getElementById('k-egr').textContent = fmtGs(totalEgr);
     document.getElementById('k-egr-sub').textContent = egresosArr.length + ' operaciones';
     document.getElementById('k-flujo').textContent = fmtGs(flujo);
-    document.getElementById('k-flujo-sub').textContent = flujo >= 0 ? 'Saldo positivo ✓' : '⚠ Déficit';
+    document.getElementById('k-flujo-sub').textContent = flujo >= 0 ? 'Saldo positivo \u2713' : '\u26A0 Déficit';
     document.getElementById('k-flujo-card').classList.add(flujo >= 0 ? 'pos' : 'neg');
     document.getElementById('k-ejec').textContent = ejec.toFixed(1) + '%';
 
-    // Ejecución
     document.getElementById('sec-ejec').innerHTML =
       barHTML('Egresos vs Ingresos Recibidos', totalEgr, totalIng, totalIng);
 
-    // Categorías
-    const maxCat = cats.length ? cats[0][1] : 1;
+    var maxCat = cats.length ? cats[0][1] : 1;
     document.getElementById('sec-cats').innerHTML =
-      cats.map(([k,v]) => barHTML(k, v, totalEgr, maxCat)).join('');
+      cats.map(function(x) { return barHTML(x[0], x[1], totalEgr, maxCat); }).join('');
 
-    // Subcategorías
-    const maxSub = subcats.length ? subcats[0][1] : 1;
+    var maxSub = subcats.length ? subcats[0][1] : 1;
     document.getElementById('sec-subcats').innerHTML =
-      subcats.map(([k,v]) => barHTML(k, v, totalEgr, maxSub)).join('');
+      subcats.map(function(x) { return barHTML(x[0], x[1], totalEgr, maxSub); }).join('');
 
-    // Cuentas
-    const maxCta = cuentas.length ? cuentas[0][1] : 1;
+    var maxCta = cuentas.length ? cuentas[0][1] : 1;
     document.getElementById('sec-cuentas').innerHTML =
-      cuentas.map(([k,v]) => barHTML(k, v, totalEgr, maxCta)).join('');
+      cuentas.map(function(x) { return barHTML(x[0], x[1], totalEgr, maxCta); }).join('');
 
-    // Recursos
-    const maxRec = recursos.length ? recursos[0][1] : 1;
+    var maxRec = recursos.length ? recursos[0][1] : 1;
     document.getElementById('sec-recursos').innerHTML =
-      recursos.map(([k,v]) => barHTML(k, v, totalEgr, maxRec)).join('');
+      recursos.map(function(x) { return barHTML(x[0], x[1], totalEgr, maxRec); }).join('');
 
     // Tabla proveedores
-    const tbProv = document.querySelector('#t-prov tbody');
-    provs.forEach(([k,v], i) => {
-      const p = pct(v, totalEgr);
-      const tr = document.createElement('tr');
+    var tbProv = document.querySelector('#t-prov tbody');
+    provs.forEach(function(x, i) {
+      var p = pct(x[1], totalEgr);
+      var tr = document.createElement('tr');
       tr.innerHTML =
         '<td class="tc">' + (i+1) + '</td>' +
-        '<td>' + k + '</td>' +
-        '<td class="tr mono">' + fmtGs(v) + '</td>' +
+        '<td>' + x[0] + '</td>' +
+        '<td class="tr mono">' + fmtGs(x[1]) + '</td>' +
         '<td class="tr mono">' + p.toFixed(1) + '%</td>' +
         '<td><div class="bar-track" style="height:6px;width:120px"><div class="bar-fill" style="width:' + p + '%"></div></div></td>';
       tbProv.appendChild(tr);
     });
 
     // Tabla ingresos
-    const tbIng = document.querySelector('#t-ing tbody');
-    let acum = 0;
-    ingresosArr.forEach((d, i) => {
+    var tbIng = document.querySelector('#t-ing tbody');
+    var acum = 0;
+    ingresosArr.forEach(function(d, i) {
       acum += d.monto;
-      const tr = document.createElement('tr');
+      var tr = document.createElement('tr');
       tr.innerHTML =
         '<td class="tc">' + (i+1) + '</td>' +
         '<td>' + fmtDate(d.fecha) + '</td>' +
-        '<td>' + (d.desc || '—') + '</td>' +
-        '<td>' + (d.cat || '—') + '</td>' +
+        '<td>' + (d.desc || '\u2014') + '</td>' +
+        '<td>' + (d.cat || '\u2014') + '</td>' +
         '<td class="tr mono">' + fmtGs(d.monto) + '</td>' +
         '<td class="tr mono">' + fmtGs(acum) + '</td>';
       tbIng.appendChild(tr);
     });
-    const trTot = document.createElement('tr');
+    var trTot = document.createElement('tr');
     trTot.className = 'total-row';
     trTot.innerHTML = '<td colspan="4" class="tr">TOTAL INGRESOS</td><td class="tr mono">' + fmtGs(totalIng) + '</td><td></td>';
     tbIng.appendChild(trTot);
 
-    // Tabla egresos (últimos 50)
-    const tbEgr = document.querySelector('#t-egr tbody');
-    egresosArr.slice(-50).reverse().forEach(d => {
-      const tr = document.createElement('tr');
+    // Tabla egresos
+    var tbEgr = document.querySelector('#t-egr tbody');
+    var last50 = egresosArr.slice(-50).reverse();
+    last50.forEach(function(d) {
+      var tr = document.createElement('tr');
       tr.innerHTML =
         '<td>' + fmtDate(d.fecha) + '</td>' +
-        '<td>' + (d.cat || '—') + '</td>' +
-        '<td>' + (d.subcat || '—') + '</td>' +
-        '<td>' + (d.desc || '—') + '</td>' +
-        '<td>' + (d.prov || '—') + '</td>' +
+        '<td>' + (d.cat || '\u2014') + '</td>' +
+        '<td>' + (d.subcat || '\u2014') + '</td>' +
+        '<td>' + (d.desc || '\u2014') + '</td>' +
+        '<td>' + (d.prov || '\u2014') + '</td>' +
         '<td class="tr mono">' + fmtGs(d.monto) + '</td>';
       tbEgr.appendChild(tr);
     });
 
-    // Show
     document.getElementById('loading').style.display = 'none';
     document.getElementById('report').style.display = 'block';
 
- async function main() {
-  try {
-    const resp = await fetch(CSV_URL);
+  } catch(err) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error-detail').textContent = err.message;
+    document.getElementById('error-msg').style.display = 'block';
+    console.error('Testanova Report Error:', err);
+  }
 }
 
 main();
